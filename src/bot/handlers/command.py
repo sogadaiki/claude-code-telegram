@@ -1227,7 +1227,7 @@ async def request_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     settings: Settings = context.bot_data["settings"]
 
     # Auth check
-    if settings.allowed_user_ids and user_id not in settings.allowed_user_ids:
+    if settings.allowed_users and user_id not in settings.allowed_users:
         await update.message.reply_text("Not authorized.")
         return
 
