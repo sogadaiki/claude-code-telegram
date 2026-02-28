@@ -311,6 +311,7 @@ class MessageOrchestrator:
             ("status", self.agentic_status),
             ("verbose", self.agentic_verbose),
             ("repo", self.agentic_repo),
+            ("request", command.request_command),
         ]
         if self.settings.enable_project_threads:
             handlers.append(("sync_threads", command.sync_threads))
@@ -369,6 +370,7 @@ class MessageOrchestrator:
             ("export", command.export_session),
             ("actions", command.quick_actions),
             ("git", command.git_command),
+            ("request", command.request_command),
         ]
         if self.settings.enable_project_threads:
             handlers.append(("sync_threads", command.sync_threads))
@@ -409,6 +411,7 @@ class MessageOrchestrator:
                 BotCommand("status", t("cmd_status", lang)),
                 BotCommand("verbose", t("cmd_verbose", lang)),
                 BotCommand("repo", t("cmd_repo", lang)),
+                BotCommand("request", "Queue a task for mai agent"),
             ]
             if self.settings.enable_project_threads:
                 commands.append(BotCommand("sync_threads", t("cmd_sync_threads", lang)))
@@ -428,6 +431,7 @@ class MessageOrchestrator:
                 BotCommand("export", "Export current session"),
                 BotCommand("actions", "Show quick actions"),
                 BotCommand("git", "Git repository commands"),
+                BotCommand("request", "Queue a task for mai agent"),
             ]
             if self.settings.enable_project_threads:
                 commands.append(BotCommand("sync_threads", "Sync project topics"))

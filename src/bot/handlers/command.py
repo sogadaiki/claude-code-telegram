@@ -1221,6 +1221,86 @@ async def git_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         logger.error("Error in git_command", error=str(e), user_id=user_id)
 
 
+async def request_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /request command to queue a task for mai agent."""
+    user_id = update.effective_user.id
+    settings: Settings = context.bot_data["settings"]
+
+    # Auth check
+    if settings.allowed_user_ids and user_id not in settings.allowed_user_ids:
+        await update.message.reply_text("Not authorized.")
+        return
+
+    # Extract request content from command args
+    raw_text = update.message.text or ""
+    content = raw_text.split(maxsplit=1)[1] if len(raw_text.split(maxsplit=1)) > 1 else ""
+
+    if not content.strip():
+        await update.message.reply_text(
+            "<b>/request</b>\n\n"
+            "Usage: <code>/request [content]</code>\n\n"
+            "Example:\n"
+            "<code>/request SEO article about franchise benchmarks</code>\n"
+            "<code>/request search latest AI agent frameworks</code>",
+            parse_mode="HTML",
+        )
+        return
+
+    # Call queue-request.sh
+    import asyncio
+
+    queue_script = "/Users/daiki12/Desktop/development/sadame-ops/scripts/queue-request.sh"
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "/bin/bash",
+            queue_script,
+            "--source", "telegram",
+            "--content", content.strip(),
+            "--immediate",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
+
+        if proc.returncode != 0:
+            error_msg = stderr.decode().strip() if stderr else "Unknown error"
+            logger.error(
+                "queue-request.sh failed",
+                returncode=proc.returncode,
+                stderr=error_msg,
+                user_id=user_id,
+            )
+            await update.message.reply_text(
+                f"Failed to queue request.\n<code>{escape_html(error_msg[:200])}</code>",
+                parse_mode="HTML",
+            )
+            return
+
+        request_id = stdout.decode().strip()
+        stderr_info = stderr.decode().strip() if stderr else ""
+
+        # Check if pipeline was kicked
+        kicked = "Pipeline kicked" in stderr_info
+        status_line = "Executing now" if kicked else "Queued for next scheduled run"
+
+        await update.message.reply_text(
+            f"Request accepted: <code>{escape_html(request_id)}</code>\n"
+            f"Status: {status_line}\n\n"
+            f"<i>{escape_html(content.strip()[:200])}</i>",
+            parse_mode="HTML",
+        )
+
+    except asyncio.TimeoutError:
+        await update.message.reply_text("Request timed out. Try again later.")
+        logger.error("queue-request.sh timed out", user_id=user_id)
+    except FileNotFoundError:
+        await update.message.reply_text(
+            "queue-request.sh not found. Check deployment.",
+        )
+        logger.error("queue-request.sh not found", user_id=user_id)
+
+
 def _format_file_size(size: int) -> str:
     """Format file size in human-readable format."""
     for unit in ["B", "KB", "MB", "GB"]:
