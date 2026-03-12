@@ -96,6 +96,8 @@ Settings loaded from environment variables via Pydantic Settings. Required: `TEL
 
 Agentic platform settings: `AGENTIC_MODE` (default true), `ENABLE_API_SERVER`, `API_SERVER_PORT` (default 8080), `GITHUB_WEBHOOK_SECRET`, `WEBHOOK_API_SECRET`, `ENABLE_SCHEDULER`, `NOTIFICATION_CHAT_IDS`.
 
+Persona/i18n: `BOT_PERSONA` (persona name), `BOT_LANGUAGE` (`ja`|`en`, default `en`). `REPLY_QUOTE` (default true) controls whether bot replies quote the original message.
+
 Security relaxation (trusted environments only): `DISABLE_SECURITY_PATTERNS` (default false), `DISABLE_TOOL_VALIDATION` (default false).
 
 Multi-project topics: `ENABLE_PROJECT_THREADS` (default false), `PROJECT_THREADS_MODE` (`private`|`group`), `PROJECT_THREADS_CHAT_ID` (required for group mode), `PROJECTS_CONFIG_PATH` (path to YAML project registry), `PROJECT_THREADS_SYNC_ACTION_INTERVAL_SECONDS` (default `1.1`, set `0` to disable pacing). See `config/projects.example.yaml`.
@@ -120,12 +122,16 @@ All datetimes use timezone-aware UTC: `datetime.now(UTC)` (not `datetime.utcnow(
 
 ### Agentic mode
 
-Agentic mode commands: `/start`, `/new`, `/status`, `/verbose`, `/repo`. If `ENABLE_PROJECT_THREADS=true`: `/sync_threads`. To add a new command:
+Agentic mode commands: `/start`, `/new`, `/status`, `/verbose`, `/repo`, `/request`. If `ENABLE_PROJECT_THREADS=true`: `/sync_threads`. To add a new command:
 
 1. Add handler function in `src/bot/orchestrator.py`
 2. Register in `MessageOrchestrator._register_agentic_handlers()`
 3. Add to `MessageOrchestrator.get_bot_commands()` for Telegram's command menu
 4. Add audit logging for the command
+
+### Testing Gotchas
+
+- Test fixtures using `Settings()` must include `bot_language="en"` (required field with no env default in test context)
 
 ### Classic mode
 
